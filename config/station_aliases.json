@@ -1,0 +1,14 @@
+{
+  "_ref_fallbacks": {
+    "2": ["8"]
+  },
+  "Airport South": "@113.2960,23.3827",
+  "Airport North": "@113.2996,23.3980",
+  "Fei'eling": "@113.1494,23.3807",
+  "Huangpu New Port": "@113.5195,23.0551",
+  "Jiaoxin": "@113.2117,23.2392",
+  "Kuiqi Road": "Kuiqi Lu",
+  "Nansha Passenger Port": "@113.6049,22.7691",
+  "Xiangxue": "@113.4959,23.1750",
+  "Zengcheng Square": "@113.8086,23.2810"
+}

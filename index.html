@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guangzhou Metro Time-Map</title>
+<link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #E9E7E1; }
+  body { font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  .gz-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .gz-scroll::-webkit-scrollbar-thumb { background: #D8D6CF; border-radius: 4px; }
+  .gz-scroll::-webkit-scrollbar-track { background: transparent; }
+  @keyframes gzdraw { from { stroke-dashoffset: var(--gzlen); } to { stroke-dashoffset: 0; } }
+</style>
+</helmet>
+
+<div style="position:fixed;inset:0;background:#E9E7E1;color:#1A1A1A;overflow:hidden;font-family:Inter,sans-serif;">
+
+  <div style="position:absolute;top:0;left:0;right:0;bottom:138px;">{{ mapEl }}</div>
+
+  <div style="position:absolute;right:16px;bottom:154px;display:flex;flex-direction:column;gap:1px;background:#E3E1DA;border:1px solid #E3E1DA;border-radius:9px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+    <button onClick="{{ zoomIn }}" style="width:32px;height:32px;border:none;background:#FAFAF7;cursor:pointer;color:#1A1A1A;font-family:'Space Grotesk',sans-serif;font-size:18px;line-height:1;padding:0;" style-hover="background:#F0EEE8" aria-label="Zoom in">+</button>
+    <button onClick="{{ zoomOut }}" style="width:32px;height:32px;border:none;background:#FAFAF7;cursor:pointer;color:#1A1A1A;font-family:'Space Grotesk',sans-serif;font-size:18px;line-height:1;padding:0;" style-hover="background:#F0EEE8" aria-label="Zoom out">–</button>
+    <button onClick="{{ resetView }}" style="width:32px;height:30px;border:none;background:#FAFAF7;cursor:pointer;color:#6B6862;font-family:Inter,sans-serif;font-size:8px;letter-spacing:.08em;padding:0;" style-hover="background:#F0EEE8" aria-label="Reset view">FIT</button>
+  </div>
+
+  <div style="position:absolute;top:16px;left:16px;width:286px;max-width:calc(100vw - 32px);background:#FAFAF7;border:1px solid #E3E1DA;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:15px 16px 13px;border-bottom:1px solid #EFEDE6;">
+      <div>
+        <div style="font-family:'Noto Sans SC',sans-serif;font-weight:700;font-size:17px;letter-spacing:.04em;color:#1A1A1A;line-height:1.1;">广州地铁</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;letter-spacing:.14em;color:#1A1A1A;margin-top:3px;">GUANGZHOU METRO</div>
+        <div style="font-family:Inter,sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9A968D;margin-top:6px;">Network history · 1997–2026</div>
+      </div>
+      <button onClick="{{ toggleIndex }}" style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B6862;font-size:14px;line-height:1;padding:0;" style-hover="background:#F0EEE8" aria-label="Toggle line index">{{ collapseIcon }}</button>
+    </div>
+    <sc-if value="{{ indexOpen }}" hint-placeholder-val="{{ true }}">
+      <div class="gz-scroll" style="max-height:calc(100vh - 232px);overflow-y:auto;padding:7px 8px;">
+        <sc-for list="{{ lineRows }}" as="row" hint-placeholder-count="8">
+          <div onClick="{{ row.onClick }}" style="display:flex;align-items:center;gap:11px;padding:7px 9px;border-radius:8px;cursor:pointer;opacity:{{ row.op }};background:{{ row.bg }};transition:opacity .3s, background .15s;" style-hover="background:#F0EEE8">
+            <div style="flex:none;width:27px;height:27px;border-radius:50%;background:{{ row.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:{{ row.badgeSize }};">{{ row.badge }}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Noto Sans SC',sans-serif;font-weight:500;font-size:13px;color:#1A1A1A;line-height:1.2;">{{ row.name_zh }}</div>
+              <div style="font-family:Inter,sans-serif;font-size:10.5px;color:#9A968D;letter-spacing:.03em;line-height:1.3;">{{ row.name_en }}</div>
+            </div>
+            <div style="flex:none;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#B0ABA1;">{{ row.year }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="position:absolute;top:16px;right:16px;background:#FAFAF7;border:1px solid #E3E1DA;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:9px 13px;text-align:right;min-width:124px;">
+    <div style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#9A968D;">As of</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;letter-spacing:.02em;color:#1A1A1A;margin-top:1px;">{{ asOfDate }}</div>
+    <div style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.03em;color:#9A968D;margin-top:3px;">{{ openSummary }}</div>
+  </div>
+
+  <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;top:96px;right:16px;width:322px;max-width:calc(100vw - 32px);max-height:calc(100vh - 244px);display:flex;flex-direction:column;background:#FAFAF7;border:1px solid #E3E1DA;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+      <div style="padding:15px 16px 13px;border-bottom:1px solid #EFEDE6;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="min-width:0;">
+            <div style="font-family:'Noto Sans SC',sans-serif;font-weight:600;font-size:20px;color:#1A1A1A;line-height:1.15;">{{ detail.title_zh }}</div>
+            <div style="font-family:Inter,sans-serif;font-size:13px;color:#444;margin-top:2px;">{{ detail.title_en }}</div>
+          </div>
+          <button onClick="{{ clearSelection }}" style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;color:#6B6862;font-size:16px;line-height:1;padding:0;" style-hover="background:#F0EEE8" aria-label="Close detail">×</button>
+        </div>
+        <div style="font-family:Inter,sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8A867E;margin-top:9px;">{{ detail.micro }}</div>
+        <sc-if value="{{ detail.hasChips }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+            <sc-for list="{{ detail.chips }}" as="c" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;border:1px solid #EAE8E1;border-radius:20px;">
+                <span style="flex:none;width:17px;height:17px;border-radius:50%;background:{{ c.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:{{ c.size }};">{{ c.badge }}</span>
+                <span style="font-family:Inter,sans-serif;font-size:11px;color:#444;">{{ c.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      <div class="gz-scroll" style="overflow-y:auto;padding:3px 16px 14px;">
+        <sc-for list="{{ detail.rows }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;gap:13px;padding:9px 0;border-top:1px solid #EFEDE6;">
+            <div style="flex:none;width:64px;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#8A867E;letter-spacing:.03em;padding-top:2px;">{{ r.date }}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:7px;">
+                <sc-if value="{{ r.hasDot }}" hint-placeholder-val="{{ true }}"><span style="flex:none;width:10px;height:10px;border-radius:50%;background:{{ r.color }};"></span></sc-if>
+                <span style="font-family:Inter,sans-serif;font-weight:600;font-size:13px;color:#1A1A1A;line-height:1.3;">{{ r.label }}</span>
+              </div>
+              <div style="font-family:'Noto Sans SC',sans-serif;font-size:11.5px;color:#8A867E;margin-top:2px;line-height:1.45;">{{ r.sub }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:16px;background:#FAFAF7;border:1px solid #E3E1DA;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:14px 22px 14px 20px;display:flex;align-items:center;gap:22px;">
+    <div style="flex:none;width:206px;">
+      <div style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#9A968D;">The network as of</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:62px;line-height:1.0;letter-spacing:-.01em;color:#1A1A1A;margin-top:1px;">{{ bigYear }}</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;letter-spacing:.03em;color:#1A1A1A;margin-top:3px;">{{ fullDate }}</div>
+      <div style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A968D;margin-top:2px;">{{ openSummary }}</div>
+    </div>
+    <button onClick="{{ togglePlay }}" style="flex:none;width:46px;height:46px;border-radius:50%;border:1.5px solid #1A1A1A;background:#FAFAF7;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;" style-hover="background:#F0EEE8" aria-label="Play or pause the replay">
+      <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><span style="display:flex;gap:4px;"><span style="width:4px;height:15px;background:#1A1A1A;"></span><span style="width:4px;height:15px;background:#1A1A1A;"></span></span></sc-if>
+      <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><span style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:13px solid #1A1A1A;margin-left:3px;"></span></sc-if>
+    </button>
+    <div style="flex:1;min-width:0;">{{ trackEl }}</div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    t: 1, playing: false,
+    selectionKind: null, selectedLineId: null, selStationKey: null, selGeoProps: null,
+    hoverEvent: null, indexCollapsed: false, loaded: false, mapReady: false,
+  };
+  START = Date.UTC(1997, 5, 28);
+  END   = Date.UTC(2026, 11, 31);
+  MON   = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+  async componentDidMount() {
+    try { const v = parseFloat(localStorage.getItem('gzmetro.t')); if (!isNaN(v) && v >= 0 && v <= 1) this.setState({ t: v }); } catch (e) {}
+    try {
+      const m = await import('./gz-data.js');
+      this.LINES = m.LINES; this.EVENTS = m.EVENTS;
+      this.buildStations();
+      this.setState({ loaded: true });
+    } catch (e) { console.error('gz-data load failed', e); }
+  }
+  componentWillUnmount() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    if (this.mapInst) { this.mapInst.remove(); this.mapInst = null; }
+  }
+
+  clean(s) { return (s || '').replace(/\?.*/, '').trim(); }
+
+  buildStations() {
+    const map = new Map();
+    const add = (line, st, isEnd) => {
+      const key = st[2] + ',' + st[3];
+      let m = map.get(key);
+      if (!m) { m = { key, x: st[2], y: st[3], en: this.clean(st[0]), zh: st[1], opened: st[4], lines: new Set(), color: line.color, interchange: !!st[5], terminal: false, perLine: [] }; map.set(key, m); }
+      if (st[4] < m.opened) m.opened = st[4];
+      m.lines.add(line.id);
+      if (st[5]) m.interchange = true;
+      if (isEnd) m.terminal = true;
+      if (!m.perLine.some(p => p.id === line.id)) m.perLine.push({ id: line.id, color: line.color, name_en: line.name_en, name_zh: line.name_zh, opened: st[4] });
+    };
+    for (const line of this.LINES) {
+      const a = line.stations; a.forEach((st, i) => add(line, st, i === 0 || i === a.length - 1));
+      if (line.branch) { const b = line.branch; b.forEach((st, i) => add(line, st, i === 0)); }
+    }
+    for (const m of map.values()) { if (m.lines.size > 1) m.interchange = true; }
+    this.stations = [...map.values()];
+  }
+
+  pad(n) { return n < 10 ? '0' + n : '' + n; }
+  isoAt(t) { const d = new Date(this.START + t * (this.END - this.START)); return d.getUTCFullYear() + '-' + this.pad(d.getUTCMonth() + 1) + '-' + this.pad(d.getUTCDate()); }
+  yearAt(t) { return new Date(this.START + t * (this.END - this.START)).getUTCFullYear(); }
+  tOf(iso) { const p = iso.split('-').map(Number); const ms = Date.UTC(p[0], p[1] - 1, p[2]); return Math.max(0, Math.min(1, (ms - this.START) / (this.END - this.START))); }
+  fmtMY(iso) { const p = iso.split('-'); return this.MON[+p[1] - 1] + ' ' + p[0]; }
+  fmtFull(iso) { const p = iso.split('-'); return (+p[2]) + ' ' + this.MON[+p[1] - 1] + ' ' + p[0]; }
+  tToDateInt(t) {
+    const d = new Date(this.START + t * (this.END - this.START));
+    return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+  }
+
+  setT(t, persist = true) {
+    this.setState({ t });
+    this.updateMapFilter(t);
+    if (persist) { try { localStorage.setItem('gzmetro.t', String(t)); } catch (e) {} }
+  }
+
+  togglePlay = () => {
+    if (this.state.playing) { this.stopPlay(); }
+    else { if (this.state.t >= 0.999) this.setT(0, false); this.last = performance.now(); this.setState({ playing: true }, () => { this.raf = requestAnimationFrame(this.tick); }); }
+  };
+  tick = (ts) => {
+    if (!this.state.playing) return;
+    const dt = Math.min(0.1, (ts - this.last) / 1000); this.last = ts;
+    let t = this.state.t + dt / 26;
+    if (t >= 1) { t = 1; this.setT(t, true); this.stopPlay(); return; }
+    this.setT(t, false); this.raf = requestAnimationFrame(this.tick);
+  };
+  stopPlay() { if (this.raf) cancelAnimationFrame(this.raf); try { localStorage.setItem('gzmetro.t', String(this.state.t)); } catch (e) {} this.setState({ playing: false }); }
+
+  selectLine = (id) => { this.setState({ selectionKind: 'line', selectedLineId: id, selStationKey: null, selGeoProps: null }); };
+  clearSelection = () => { this.setState({ selectionKind: null, selectedLineId: null, selStationKey: null, selGeoProps: null }); };
+  toggleIndex = () => { this.setState(s => ({ indexCollapsed: !s.indexCollapsed })); };
+  selectGeoStation = (props) => {
+    let refs = [];
+    try { refs = typeof props.line_refs === 'string' ? JSON.parse(props.line_refs) : (Array.isArray(props.line_refs) ? props.line_refs : []); } catch (_) {}
+    const st = this.stations && this.stations.find(s => s.zh === props.name_zh || s.en === props.name_en);
+    if (st) { this.setState({ selectionKind: 'station', selStationKey: st.key, selGeoProps: null }); }
+    else { this.setState({ selectionKind: 'geo-station', selGeoProps: { ...props, _refs: refs }, selStationKey: null }); }
+  };
+
+  setTrackRef = (el) => { this.trackRef = el; };
+  updateFromX(x) { if (!this.trackRef) return; const r = this.trackRef.getBoundingClientRect(); let t = (x - r.left) / r.width; t = Math.max(0, Math.min(1, t)); this.setT(t); }
+  onTrackDown = (e) => { if (this.state.playing) this.stopPlay(); this.dragging = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {} this.updateFromX(e.clientX); };
+  onMove = (e) => { if (this.dragging) this.updateFromX(e.clientX); };
+  onUp = () => { if (this.dragging) { this.dragging = false; try { localStorage.setItem('gzmetro.t', String(this.state.t)); } catch (_) {} } };
+
+  // ── MapLibre GL ───────────────────────────────────────────────────────────
+  setMapRef = (el) => {
+    if (!el || this.mapInst) return;
+    this.initMapLibre(el);
+  };
+
+  initMapLibre(container) {
+    if (!window.maplibregl) { console.error('maplibregl not loaded'); return; }
+    const map = new maplibregl.Map({
+      container,
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      center: [113.26, 23.12],
+      zoom: 10,
+      attributionControl: { compact: true },
+      pitchWithRotate: false,
+      dragRotate: false,
+    });
+    this.mapInst = map;
+
+    map.on('load', () => {
+      map.addSource('gz', { type: 'geojson', data: './data/guangzhou_metro_temporal.geojson' });
+
+      map.addLayer({
+        id: 'gz-lines', type: 'line', source: 'gz',
+        filter: ['==', ['get', 'kind'], 'line'],
+        paint: {
+          'line-color': ['coalesce', ['get', 'color'], '#888888'],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 4, 16, 8],
+        },
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+      });
+
+      map.addLayer({
+        id: 'gz-stations', type: 'circle', source: 'gz',
+        filter: ['==', ['get', 'kind'], 'station'],
+        paint: {
+          'circle-color': '#FAFAF7',
+          'circle-stroke-color': ['coalesce', ['get', 'color'], '#888888'],
+          'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 13, 2.5],
+          'circle-radius':       ['interpolate', ['linear'], ['zoom'], 9, 3, 12, 5, 15, 8],
+        },
+      });
+
+      map.on('click', 'gz-lines',    (e) => { if (e.features.length) { const r = e.features[0].properties.line; if (r) this.selectLine(r); } });
+      map.on('click', 'gz-stations', (e) => { if (e.features.length) this.selectGeoStation(e.features[0].properties); });
+      ['gz-lines', 'gz-stations'].forEach(id => {
+        map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
+      });
+
+      this.updateMapFilter(this.state.t);
+      this.setState({ mapReady: true });
+    });
+
+    map.on('error', e => { if (e.error) console.warn('MapLibre:', e.error.message || e.error); });
+  }
+
+  updateMapFilter(t) {
+    if (!this.mapInst || !this.mapInst.getLayer('gz-lines')) return;
+    const d = this.tToDateInt(t != null ? t : this.state.t);
+    const openedOk = ['case', ['==', ['get', 'opened'], null], true, ['<=', ['get', 'opened'], d]];
+    const closedOk = ['case', ['==', ['get', 'closed'],  null], true, ['>', ['get', 'closed'],  d]];
+    this.mapInst.setFilter('gz-lines',    ['all', ['==', ['get', 'kind'], 'line'],    openedOk, closedOk]);
+    this.mapInst.setFilter('gz-stations', ['all', ['==', ['get', 'kind'], 'station'], openedOk, closedOk]);
+  }
+
+  zoomIn  = () => { if (this.mapInst) this.mapInst.zoomIn(); };
+  zoomOut = () => { if (this.mapInst) this.mapInst.zoomOut(); };
+  resetView = () => { if (this.mapInst) this.mapInst.fitBounds([[112.5, 22.5], [114.5, 24.0]], { padding: 60, duration: 600 }); };
+
+  buildMap() {
+    return React.createElement('div', { ref: this.setMapRef, style: { width: '100%', height: '100%' } });
+  }
+
+  buildTrack() {
+    const R = React.createElement, t = this.state.t, pct = t * 100;
+    const kids = [];
+    kids.push(R('div', { key: 'base', style: { position: 'absolute', left: 0, right: 0, top: '38px', height: '3px', background: '#D8D6CF', borderRadius: '2px' } }));
+    kids.push(R('div', { key: 'prog', style: { position: 'absolute', left: 0, top: '38px', height: '3px', width: pct + '%', background: '#1A1A1A', borderRadius: '2px' } }));
+    for (let y = 1997; y <= 2026; y++) {
+      const p = this.tOf(y + '-01-01') * 100;
+      kids.push(R('div', { key: 'tk' + y, style: { position: 'absolute', left: p + '%', top: '34px', width: '1px', height: '8px', background: '#C7C5BE' } }));
+      if (y % 2 === 1 || y === 2026) kids.push(R('div', { key: 'lb' + y, style: { position: 'absolute', left: p + '%', top: '47px', transform: 'translateX(-50%)', fontFamily: 'Space Grotesk, sans-serif', fontVariantNumeric: 'tabular-nums', fontSize: '9.5px', color: '#A6A299', whiteSpace: 'nowrap' } }, '\'' + String(y).slice(2)));
+    }
+    for (const ev of (this.EVENTS || [])) {
+      const p = this.tOf(ev.date) * 100; const active = this.state.hoverEvent === ev.date;
+      kids.push(R('div', { key: 'evh' + ev.date, onMouseEnter: () => this.setState({ hoverEvent: ev.date }), onMouseLeave: () => this.setState({ hoverEvent: null }), style: { position: 'absolute', left: p + '%', top: '18px', width: '14px', height: '24px', transform: 'translateX(-50%)', cursor: 'pointer', display: 'flex', justifyContent: 'center' } },
+        R('div', { key: 'n', style: { width: '2px', height: '100%', background: active ? '#1A1A1A' : '#B8453B', opacity: active ? 1 : 0.85 } })));
+    }
+    kids.push(R('div', { key: 'handle', style: { position: 'absolute', left: pct + '%', top: '30px', transform: 'translateX(-50%)', width: '20px', height: '20px', borderRadius: '50%', background: '#FAFAF7', border: '2px solid #1A1A1A', boxShadow: '0 1px 3px rgba(0,0,0,0.18)', pointerEvents: 'none' } }));
+    if (this.state.hoverEvent) {
+      const ev = (this.EVENTS || []).find(e => e.date === this.state.hoverEvent);
+      if (ev) {
+        const p = this.tOf(ev.date) * 100; const left = Math.max(8, Math.min(92, p));
+        kids.push(R('div', { key: 'tip', style: { position: 'absolute', left: left + '%', bottom: '58px', transform: 'translateX(-50%)', width: '212px', background: '#FAFAF7', border: '1px solid #E3E1DA', borderRadius: '10px', boxShadow: '0 4px 14px rgba(0,0,0,0.10)', padding: '10px 12px', pointerEvents: 'none', zIndex: 5 } }, [
+          R('div', { key: 'd', style: { fontFamily: 'Space Grotesk, sans-serif', fontVariantNumeric: 'tabular-nums', fontSize: '10.5px', letterSpacing: '.08em', color: '#8A867E' } }, this.fmtFull(ev.date)),
+          R('div', { key: 't', style: { fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '13px', color: '#1A1A1A', marginTop: '2px' } }, ev.title),
+          R('div', { key: 'x', style: { fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6B6862', marginTop: '3px', lineHeight: 1.4 } }, ev.detail),
+        ]));
+      }
+    }
+    return R('div', { ref: this.setTrackRef, onPointerDown: this.onTrackDown, onPointerMove: this.onMove, onPointerUp: this.onUp, onPointerCancel: this.onUp, style: { position: 'relative', width: '100%', height: '64px', touchAction: 'none', userSelect: 'none' } }, kids);
+  }
+
+  buildDetail() {
+    if (this.state.selectionKind === 'line') {
+      const line = this.LINES && this.LINES.find(l => l.id === this.state.selectedLineId); if (!line) return {};
+      const groups = new Map(); const push = (st) => { const d = st[4]; if (!groups.has(d)) groups.set(d, []); groups.get(d).push(st); };
+      line.stations.forEach(push); if (line.branch) line.branch.forEach(push);
+      const dates = [...groups.keys()].sort();
+      const rows = dates.map(d => {
+        const arr = groups.get(d); const ens = arr.map(s => this.clean(s[0])); const zhs = arr.map(s => s[1]);
+        let label, sub;
+        if (ens.length <= 3) { label = ens.join(' · '); sub = zhs.join('　'); }
+        else { label = ens.length + ' stations'; sub = ens.join(' · '); }
+        return { date: this.fmtMY(d), hasDot: true, color: line.color, label, sub };
+      });
+      return { title_zh: line.name_zh, title_en: line.name_en, micro: line.name_en.toUpperCase() + ' · OPENED ' + line.opened.slice(0, 4), hasChips: false, chips: [], rows };
+    }
+    if (this.state.selectionKind === 'station') {
+      const st = this.stations && this.stations.find(s => s.key === this.state.selStationKey); if (!st) return {};
+      const pl = [...st.perLine].sort((a, b) => a.opened < b.opened ? -1 : 1);
+      const rows = pl.map(p => ({ date: this.fmtMY(p.opened), hasDot: true, color: p.color, label: p.name_en, sub: p.name_zh }));
+      const chips = pl.map(p => ({ color: p.color, badge: p.id, size: p.id.length > 2 ? '7px' : '9px', label: p.name_en }));
+      const micro = st.interchange ? ('INTERCHANGE · ' + st.lines.size + ' LINES') : ('STATION · OPENED ' + st.opened.slice(0, 4));
+      return { title_zh: st.zh, title_en: st.en, micro, hasChips: true, chips, rows };
+    }
+    if (this.state.selectionKind === 'geo-station') {
+      const p = this.state.selGeoProps || {};
+      const refs = p._refs || [];
+      const chips = refs.map(r => {
+        const l = this.LINES && this.LINES.find(x => x.id === r);
+        return l ? { color: l.color, badge: r, size: r.length > 2 ? '7px' : '9px', label: l.name_en } : null;
+      }).filter(Boolean);
+      return { title_zh: p.name_zh || p.name || '', title_en: p.name_en || '', micro: refs.length > 1 ? ('INTERCHANGE · ' + refs.length + ' LINES') : 'STATION', hasChips: chips.length > 0, chips, rows: [] };
+    }
+    return {};
+  }
+
+  renderVals() {
+    const t = this.state.t, iso = this.isoAt(t);
+    const base = {
+      togglePlay: this.togglePlay, toggleIndex: this.toggleIndex, clearSelection: this.clearSelection,
+      playing: this.state.playing, notPlaying: !this.state.playing,
+      indexOpen: !this.state.indexCollapsed, collapseIcon: this.state.indexCollapsed ? '+' : '–',
+      bigYear: this.yearAt(t), fullDate: this.fmtFull(iso), asOfDate: this.fmtFull(iso),
+      zoomIn: this.zoomIn, zoomOut: this.zoomOut, resetView: this.resetView,
+    };
+    if (!this.LINES) return Object.assign(base, { mapEl: this.buildMap(), trackEl: this.buildTrack(), lineRows: [], hasSelection: false, detail: {}, openSummary: '' });
+    const openLines    = this.LINES.filter(l => l.opened <= iso).length;
+    const openStations = this.stations.filter(s => s.opened <= iso).length;
+    const lineRows = this.LINES.map(l => ({ id: l.id, badge: l.id, badgeSize: l.id.length > 2 ? '9px' : '13px', color: l.color, name_en: l.name_en, name_zh: l.name_zh, year: l.opened.slice(0, 4), op: (l.opened <= iso) ? 1 : 0.32, bg: (this.state.selectedLineId === l.id) ? '#EDEBE4' : 'transparent', onClick: () => this.selectLine(l.id) }));
+    return Object.assign(base, { mapEl: this.buildMap(), trackEl: this.buildTrack(), lineRows, hasSelection: this.state.selectionKind !== null, detail: this.buildDetail(), openSummary: openLines + ' lines · ' + openStations + ' stations' });
+  }
+}
+</script>
+</body>
+</html>
