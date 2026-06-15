@@ -1,13 +1,14 @@
 line,segment,opened,closed,notes
 1,Xilang – Huangsha,1997-06-28,,First section; trial operation. System's opening day.
 1,Huangsha – Guangzhou East Railway Station,1999-06-28,,Segment completed Dec 1998; full-line operation began 28 Jun 1999. Some sources cite 16 Feb 1999 (sightseeing). [verify which date your timeline uses]
-2,Sanyuanli – Xiaogang,2002-12-29,,Original Line 2 first section.
+2,Sanyuanli – Changgang,2002-12-29,,Original Line 2 central section; Changgang is where L2/L8 diverge after the 2010 restructure.
+2,Changgang – Xiaogang (pre-restructure),2002-12-29,2010-09-25,RESTRUCTURE: Changgang–Xiaogang ran as Line 2 from 2002; transferred to Line 8 on 2010-09-25.
 2,Xiaogang – Wanshengwei (original Line 2 SE branch),2003-06-28,2010-09-25,"RESTRUCTURE: this stretch (via Pazhou) was original Line 2; on 2010-09-25 it was split off to form Line 8. See Line 8 rows."
 2,Sanyuanli – Jiahewanggang (north extension),2010-09-25,,2010 realignment (trial 25 Sep 2010).
 2,Jiangnanxi – Guangzhou South Railway Station (south extension),2010-09-25,,2010 realignment; current southern terminus.
 3,Guangzhou East Railway Station – Kecun,2005-12-26,,Initial operating section.
 3,Kecun – Panyu Square,2006-12-30,,Phase 1 completion (main/Shiqiao line south).
-3,Tiyu Xilu – Tianhe Coach Terminal (branch),2006-12-30,2025-06-29,"RESTRUCTURE: original Line 3 branch; transferred to Line 10 on 2025-06-29. See Line 10 rows."
+3,Tiyu Xilu – Tianhe Coach Terminal (branch),2006-12-30,,Original Line 3 branch. Planned transfer to Line 10 delayed; remains part of Line 3.
 3,Guangzhou East Railway Station – Airport South (north extension),2010-10-30,,North extension toward airport.
 3,Airport South – Airport North (Terminal 2),2018-04-26,,Airport North extension. [verify exact date]
 3,Panyu Square – Haibang (east extension),2024-11-01,,East extension.
@@ -30,8 +31,9 @@ line,segment,opened,closed,notes
 8,Fenghuang Xincun – Cultural Park (west extension),2019-12-28,,Under-Pearl-River west extension.
 8,Cultural Park – Jiaoxin (north extension),2020-11-26,,North extension.
 9,Fei'eling – Gaozeng,2017-12-28,,Phase 1 (feeder line to Guangzhou North Rly).
-10,Xilang – Yangji East,2025-06-29,,"Initial section; incorporates former Line 3 branch (Tiyu Xilu–Tianhe Coach Terminal) converted to Line 10."
-11,Loop line (full circle),2024-12-28,,"Circular line; absorbed Tianhe Park–Yuancun segment previously run by Line 21. Terminal stations Chisha/Longtan."
+10,Xilang – Yangji East,2025-06-29,,Initial section. Planned incorporation of former Line 3 branch delayed.
+11,Loop line (full circle),2024-12-28,,Loop line opened. Includes Tianhe Park–Yuancun section formerly operated by Line 21. Terminal stations Chisha/Longtan.
+11,Tianhe Park – Yuancun,2024-12-28,,Transferred from Line 21 upon Line 11 opening.
 12,Xunfenggang – Higher Education Mega Center South,2025-06-29,,Initial section.
 13,Yuzhu – Xinsha,2017-12-28,,Phase 1 (first GZ line with 8-car trains).
 13,Tianhe Park – Yuzhu (Phase 2 east section),2025-09-29,,Phase 2 east section.
@@ -40,10 +42,13 @@ line,segment,opened,closed,notes
 14,Jiahewanggang – Lejialu (Phase 2),2025-09-29,,Phase 2 toward Guangzhou Railway Station.
 18,Wanqingsha – Xiancun,2021-09-28,,Phase 1 (160 km/h express line).
 21,Zhenlongxi – Zengcheng Square,2018-12-28,,Initial outer section.
-21,Zhenlong – Yuancun (city-centre extension),2019-12-20,,"Extension to city centre; interchange w/ Line 5. Tianhe Park–Yuancun later transferred to Line 11 (2024-12-28); Line 21 terminus adjusted to Tianhe Park Oct 2024."
+21,Zhenlong – Yuancun (city-centre extension),2019-12-20,2024-10-02,Western section later transferred to Line 11.
+21,Zhenlong – Tianhe Park,2024-10-02,,Current western terminus.
 22,Chentougang – Panyu Square,2022-03-31,,Phase 1 first stage (160 km/h express).
 22,Fangcun – Chentougang,2025-12-29,,Phase 1 second stage.
-Guangfo,Kuiqi Road – Xincheng Dong,2010-11-03,,"First inter-city metro line in China (Guangzhou–Foshan). Opened in stages 2010–2018."
-Guangfo,Xincheng Dong – Lijiao (extensions),2018-12-18,,"Later extensions (2015/2016/2018); last extension 18 Dec 2018. [verify intermediate sub-phases]"
+Guangfo,Kuiqi Lu – Xilang,2010-11-03,,"Phase 1 (1st section). First intercity metro line in China."
+Guangfo,Xilang – Yangang,2015-12-28,,"Phase 1 (2nd section). Extension further into Guangzhou."
+Guangfo,Xincheng Dong – Kuiqi Lu,2016-12-28,,"Phase 2. Western extension in Foshan."
+Guangfo,Yangang – Lijiao,2018-12-28,,"Phase 1 (3rd section). Final extension to Line 3 interchange at Lijiao."
 APM,Linhexi – Canton Tower,2010-11-08,,Zhujiang New Town Automated People Mover (driverless).
 Haizhu Tram,Canton Tower – Wanshengwei,2014-12-31,,"Haizhu Tram THZ1; first modern tram in Guangzhou. Canton Tower station rebuilt 2024–2025."

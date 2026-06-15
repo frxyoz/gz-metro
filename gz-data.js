@@ -19,10 +19,14 @@ export const LINE_COLORS = {
   '7':   '#7CB342',  // lime green
   '8':   '#00897B',  // teal
   '9':   '#00BFA5',  // teal-green
+  '10':  '#7389B2',  // blue-gray
+  '11':  '#FAC525',  // golden yellow
+  '12':  '#435428',  // dark olive green
   '13':  '#827717',  // olive
   '14':  '#6D4C41',  // brown
   '18':  '#3949AB',  // indigo
   '21':  '#1A237E',  // dark navy
+  '22':  '#CD5228',  // burnt orange — official GZ Metro Line 22 color
   'APM': '#00B0FF',  // light blue
   'GF':  '#C0CA33',  // yellow-green
 };
@@ -180,7 +184,7 @@ export const LINES = [
     ],
   },
   {
-    id: "8", name_en: "Line 8", name_zh: "8号线", color: LINE_COLORS['8'], opened: "2003-06-28",
+    id: "8", name_en: "Line 8", name_zh: "8号线", color: LINE_COLORS['8'], opened: "2010-09-25",
     stations: [
       ["Jiaoxin", "滘心", 560, 240, "2020-11-26", true],
       ["Tongde", "同德", 600, 300, "2020-11-26"],
@@ -206,6 +210,18 @@ export const LINES = [
       ["Qingtang", "清塘", 680, 200, "2017-12-28"],
       ["Gaozeng", "高增", 700, 220, "2017-12-28", true],
     ],
+  },
+  {
+    id: "10", name_en: "Line 10", name_zh: "10号线", color: LINE_COLORS['10'], opened: "2025-06-29",
+    stations: [],
+  },
+  {
+    id: "11", name_en: "Line 11", name_zh: "11号线", color: LINE_COLORS['11'], opened: "2024-12-28",
+    stations: [],
+  },
+  {
+    id: "12", name_en: "Line 12", name_zh: "12号线", color: LINE_COLORS['12'], opened: "2025-06-29",
+    stations: [],
   },
   {
     id: "13", name_en: "Line 13", name_zh: "13号线", color: LINE_COLORS['13'], opened: "2017-12-28",
@@ -245,6 +261,10 @@ export const LINES = [
       ["Zhongxin", "中新", 1200, 200, "2018-12-28"],
       ["Zengcheng Square", "增城广场", 1360, 180, "2018-12-28", true],
     ],
+  },
+  {
+    id: "22", name_en: "Line 22", name_zh: "22号线", color: LINE_COLORS['22'], opened: "2022-03-31",
+    stations: [],
   },
   {
     id: "18", name_en: "Line 18", name_zh: "18号线", color: LINE_COLORS['18'], opened: "2021-09-28",
@@ -298,7 +318,14 @@ export const EVENTS = [
   { date: "2017-12-28", title: "Lines 9, 13, 14-branch open", detail: "A single day adds three new corridors." },
   { date: "2018-12-28", title: "Lines 14 & 21 open", detail: "Reaching Conghua and Zengcheng in the far north-east." },
   { date: "2021-09-28", title: "Line 18 express opens", detail: "160 km/h service toward Nansha." },
+  { date: "2022-03-31", title: "Line 22 express opens", detail: "Second 160 km/h express line opens: Chentougang – Panyu Square." },
   { date: "2022-12-28", title: "Line 5 east extension", detail: "Extended to Huangpu New Port." },
+  { date: "2023-12-28", title: "Line 7 east extension", detail: "Phase 2 reaches Yanshan in Huangpu district." },
+  { date: "2024-11-01", title: "Line 3 extended east", detail: "New section from Panyu Square to Haibang in the south." },
+  { date: "2024-12-28", title: "Line 11 loop opens", detail: "Guangzhou's first circular line completes. Tianhe Park – Yuancun transferred from Line 21." },
+  { date: "2025-06-29", title: "Lines 10 & 12 open", detail: "Line 10 (Xilang – Yangji East) and Line 12 (Xunfenggang – Higher Ed Mega Center South) launch." },
+  { date: "2025-09-29", title: "Lines 13 & 14 extended", detail: "Line 13 Phase 2 (Tianhe Park – Yuzhu) and Line 14 Phase 2 (toward Guangzhou Railway Station) open." },
+  { date: "2025-12-29", title: "Line 22 Phase 2", detail: "Express line extended west: Fangcun – Chentougang section opens." },
 ];
 
 // All dated milestones, ascending — used to compute the open network at any date.
