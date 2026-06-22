@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Guangzhou Metro Map History</title>
     <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
     <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
@@ -19,12 +19,9 @@
                 href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap"
                 rel="stylesheet">
             <style>
-                * {
-                    box-sizing: border-box;
-                }
+                * { box-sizing: border-box; }
 
-                html,
-                body {
+                html, body {
                     margin: 0;
                     height: 100%;
                     background: #E9E7E1;
@@ -36,39 +33,272 @@
                     text-rendering: optimizeLegibility;
                 }
 
-                .gz-scroll::-webkit-scrollbar {
-                    width: 8px;
-                    height: 8px;
-                }
-
-                .gz-scroll::-webkit-scrollbar-thumb {
-                    background: #D8D6CF;
-                    border-radius: 4px;
-                }
-
-                .gz-scroll::-webkit-scrollbar-track {
-                    background: transparent;
-                }
+                .gz-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+                .gz-scroll::-webkit-scrollbar-thumb { background: #D8D6CF; border-radius: 4px; }
+                .gz-scroll::-webkit-scrollbar-track { background: transparent; }
 
                 @keyframes gzdraw {
-                    from {
-                        stroke-dashoffset: var(--gzlen);
+                    from { stroke-dashoffset: var(--gzlen); }
+                    to   { stroke-dashoffset: 0; }
+                }
+
+                /* ── Layout primitives ───────────────────────────────────── */
+
+                /* Map canvas area */
+                .gz-map {
+                    position: absolute;
+                    top: 0; left: 0; right: 0;
+                    bottom: 138px;
+                }
+
+                /* Zoom controls cluster */
+                .gz-zoom {
+                    position: absolute;
+                    right: 16px;
+                    bottom: 154px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1px;
+                    background: #E3E1DA;
+                    border: 1px solid #E3E1DA;
+                    border-radius: 9px;
+                    overflow: hidden;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                }
+
+                /* Left sidebar — line index */
+                .gz-sidebar {
+                    position: absolute;
+                    top: 16px; left: 16px;
+                    width: 286px;
+                    max-width: calc(100vw - 32px);
+                    background: #FAFAF7;
+                    border: 1px solid #E3E1DA;
+                    border-radius: 12px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    overflow: hidden;
+                }
+
+                /* Top-right date card */
+                .gz-as-of {
+                    position: absolute;
+                    top: 16px; right: 16px;
+                    background: #FAFAF7;
+                    border: 1px solid #E3E1DA;
+                    border-radius: 10px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    padding: 9px 13px;
+                    text-align: right;
+                    min-width: 124px;
+                }
+
+                /* Detail / station panel */
+                .gz-detail {
+                    position: absolute;
+                    top: 96px; right: 16px;
+                    width: 322px;
+                    max-width: calc(100vw - 32px);
+                    max-height: calc(100vh - 244px);
+                    display: flex;
+                    flex-direction: column;
+                    background: #FAFAF7;
+                    border: 1px solid #E3E1DA;
+                    border-radius: 12px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    overflow: hidden;
+                }
+
+                /* Bottom timeline bar */
+                .gz-timeline {
+                    position: absolute;
+                    left: 16px; right: 16px; bottom: 16px;
+                    background: #FAFAF7;
+                    border: 1px solid #E3E1DA;
+                    border-radius: 12px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    padding: 14px 22px 14px 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 22px;
+                }
+
+                /* Desktop-only info block (big year + date) */
+                .gz-tl-info {
+                    flex: none;
+                    width: 206px;
+                }
+
+                /* Mobile-only compact date inside timeline */
+                .gz-tl-mobile-date {
+                    display: none;
+                    flex: none;
+                    flex-direction: column;
+                    justify-content: center;
+                    padding: 0 4px;
+                }
+
+                /* Mobile-only top bar */
+                .gz-mobile-bar {
+                    display: none;
+                    position: absolute;
+                    top: 0; left: 0; right: 0;
+                    height: 48px;
+                    background: #FAFAF7;
+                    border-bottom: 1px solid #E3E1DA;
+                    align-items: center;
+                    padding: 0 14px 0 16px;
+                    gap: 10px;
+                    z-index: 30;
+                }
+
+                /* Scrim behind mobile overlays */
+                .gz-scrim {
+                    display: none;
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(0,0,0,0.18);
+                    z-index: 18;
+                }
+
+                /* ── Drag handle for bottom sheets ──────────────────────── */
+                .gz-drag-handle {
+                    display: none;
+                }
+
+                /* ── Mobile breakpoint ───────────────────────────────────── */
+                @media (max-width: 639px) {
+
+                    .gz-map {
+                        top: calc(48px + env(safe-area-inset-top, 0px));
+                        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
                     }
 
-                    to {
-                        stroke-dashoffset: 0;
+                    .gz-mobile-bar {
+                        display: flex;
+                        padding-top: env(safe-area-inset-top, 0px);
+                        height: calc(48px + env(safe-area-inset-top, 0px));
+                    }
+
+                    /* Top-right card: redundant on mobile */
+                    .gz-as-of {
+                        display: none !important;
+                    }
+
+                    /* Zoom: lift above the timeline */
+                    .gz-zoom {
+                        bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+                    }
+
+                    /* ── Bottom-sheet shared styles ── */
+
+                    /* Sidebar: bottom sheet anchored above timeline */
+                    .gz-sidebar {
+                        top: auto !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        max-height: 68vh !important;
+                        border-radius: 14px 14px 0 0 !important;
+                        border-left: none !important;
+                        border-right: none !important;
+                        border-bottom: none !important;
+                        box-shadow: 0 -3px 20px rgba(0,0,0,0.10) !important;
+                        z-index: 20;
+                        display: flex;
+                        flex-direction: column;
+                    }
+
+                    .gz-sidebar .gz-scroll {
+                        max-height: none !important;
+                        flex: 1;
+                        overflow-y: auto;
+                    }
+
+                    .gz-sidebar-hdr-desktop {
+                        display: none !important;
+                    }
+
+                    .gz-sidebar-hdr-mobile {
+                        display: flex !important;
+                    }
+
+                    /* Scrim: show when overlay is open */
+                    .gz-scrim {
+                        display: block;
+                    }
+
+                    /* Detail panel: bottom sheet anchored above timeline */
+                    .gz-detail {
+                        top: auto !important;
+                        right: 0 !important;
+                        bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        max-height: 68vh !important;
+                        border-radius: 14px 14px 0 0 !important;
+                        border-left: none !important;
+                        border-right: none !important;
+                        border-bottom: none !important;
+                        box-shadow: 0 -3px 20px rgba(0,0,0,0.10) !important;
+                        z-index: 10;
+                    }
+
+                    /* Drag handles on bottom sheets */
+                    .gz-drag-handle {
+                        display: block;
+                        width: 36px;
+                        height: 4px;
+                        background: #D0CEC8;
+                        border-radius: 2px;
+                        margin: 10px auto 6px;
+                        flex: none;
+                    }
+
+                    /* Timeline: slim strip at the bottom edge, respects home bar */
+                    .gz-timeline {
+                        left: 0 !important;
+                        right: 0 !important;
+                        bottom: 0 !important;
+                        border-radius: 0 !important;
+                        border-left: none !important;
+                        border-right: none !important;
+                        border-bottom: none !important;
+                        padding: 8px 14px max(12px, env(safe-area-inset-bottom, 12px)) 14px !important;
+                        gap: 12px !important;
+                        min-height: 72px;
+                        height: calc(72px + env(safe-area-inset-bottom, 0px));
+                        align-items: flex-start;
+                    }
+
+                    /* Big year block: hide on mobile */
+                    .gz-tl-info {
+                        display: none !important;
+                    }
+
+                    /* Compact date: show on mobile */
+                    .gz-tl-mobile-date {
+                        display: flex !important;
+                    }
+
+                    /* Play button: slightly smaller on mobile */
+                    .gz-tl-play {
+                        width: 38px !important;
+                        height: 38px !important;
                     }
                 }
             </style>
         </helmet>
 
-        <div
-            style="position:fixed;inset:0;background:#E9E7E1;color:#1A1A1A;overflow:hidden;font-family:Inter,sans-serif;">
+        <div style="position:fixed;inset:0;background:#E9E7E1;color:#1A1A1A;overflow:hidden;font-family:Inter,sans-serif;">
 
-            <div style="position:absolute;top:0;left:0;right:0;bottom:138px;">{{ mapEl }}</div>
+            <!-- MAP -->
+            <div class="gz-map">{{ mapEl }}</div>
 
-            <div
-                style="position:absolute;right:16px;bottom:154px;display:flex;flex-direction:column;gap:1px;background:#E3E1DA;border:1px solid #E3E1DA;border-radius:9px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+            <!-- ZOOM CONTROLS -->
+            <div class="gz-zoom">
                 <button onClick="{{ zoomIn }}"
                     style="width:32px;height:32px;border:none;background:#FAFAF7;cursor:pointer;color:#1A1A1A;font-family:'Space Grotesk',sans-serif;font-size:18px;line-height:1;padding:0;"
                     style-hover="background:#F0EEE8" aria-label="Zoom in">+</button>
@@ -80,93 +310,102 @@
                     style-hover="background:#F0EEE8" aria-label="Reset view">FIT</button>
             </div>
 
-            <div
-                style="position:absolute;top:16px;left:16px;width:286px;max-width:calc(100vw - 32px);background:#FAFAF7;border:1px solid #E3E1DA;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
-                <div
-                    style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:15px 16px 13px;border-bottom:1px solid #EFEDE6;">
-                    <div>
-                        <div
-                            style="font-family:'Noto Sans SC',sans-serif;font-weight:700;font-size:17px;letter-spacing:.04em;color:#1A1A1A;line-height:1.1;">
-                            广州地铁</div>
-                        <div
-                            style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;letter-spacing:.14em;color:#1A1A1A;margin-top:3px;">
-                            GUANGZHOU METRO</div>
-                        <div
-                            style="font-family:Inter,sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9A968D;margin-top:6px;">
-                            Network history · 1997–2026</div>
-                    </div>
-                    <button onClick="{{ toggleIndex }}"
-                        style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B6862;font-size:14px;line-height:1;padding:0;"
-                        style-hover="background:#F0EEE8" aria-label="Toggle line index">{{ collapseIcon }}</button>
+            <!-- MOBILE TOP BAR (hidden on desktop via CSS) -->
+            <div class="gz-mobile-bar">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-family:'Noto Sans SC',sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;color:#1A1A1A;line-height:1;">广州地铁</div>
+                    <div style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9A968D;margin-top:1px;">{{ asOfDate }}</div>
                 </div>
-                <sc-if value="{{ indexOpen }}" hint-placeholder-val="{{ true }}">
-                    <div class="gz-scroll" style="max-height:calc(100vh - 232px);overflow-y:auto;padding:7px 8px;">
-                        <sc-for list="{{ lineRows }}" as="row" hint-placeholder-count="8">
-                            <div onClick="{{ row.onClick }}"
-                                style="display:flex;align-items:center;gap:11px;padding:7px 9px;border-radius:8px;cursor:pointer;opacity:{{ row.op }};background:{{ row.bg }};transition:opacity .3s, background .15s;"
-                                style-hover="background:#F0EEE8">
-                                <div
-                                    style="flex:none;width:27px;height:27px;border-radius:50%;background:{{ row.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:{{ row.badgeSize }};">
-                                    {{ row.badge }}</div>
-                                <div style="flex:1;min-width:0;">
-                                    <div
-                                        style="font-family:'Noto Sans SC',sans-serif;font-weight:500;font-size:13px;color:#1A1A1A;line-height:1.2;">
-                                        {{ row.name_zh }}</div>
-                                    <div
-                                        style="font-family:Inter,sans-serif;font-size:10.5px;color:#9A968D;letter-spacing:.03em;line-height:1.3;">
-                                        {{ row.name_en }}</div>
-                                </div>
-                                <div
-                                    style="flex:none;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#B0ABA1;">
-                                    {{ row.year }}</div>
-                            </div>
-                        </sc-for>
-                    </div>
+                <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ clearSelection }}"
+                        style="flex:none;width:30px;height:30px;border-radius:8px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;color:#6B6862;font-size:16px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;"
+                        style-hover="background:#F0EEE8" aria-label="Close detail">×</button>
                 </sc-if>
+                <button onClick="{{ toggleIndex }}"
+                    style="flex:none;width:30px;height:30px;border-radius:8px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;color:#1A1A1A;font-size:15px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;"
+                    style-hover="background:#F0EEE8" aria-label="Toggle line index">{{ mobileMenuIcon }}</button>
             </div>
 
-            <div
-                style="position:absolute;top:16px;right:16px;background:#FAFAF7;border:1px solid #E3E1DA;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:9px 13px;text-align:right;min-width:124px;">
-                <div
-                    style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#9A968D;">
-                    As of</div>
-                <div
-                    style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;letter-spacing:.02em;color:#1A1A1A;margin-top:1px;">
-                    {{ asOfDate }}</div>
-                <div
-                    style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.03em;color:#9A968D;margin-top:3px;">
-                    {{ openSummary }}</div>
+            <!-- SCRIM (mobile only, behind sidebar/detail overlays) -->
+            <sc-if value="{{ showScrim }}" hint-placeholder-val="{{ false }}">
+                <div class="gz-scrim" onClick="{{ closeOverlay }}"></div>
+            </sc-if>
+
+            <!-- SIDEBAR (line index) -->
+            <!-- On desktop: always shown. On mobile: shown as overlay only when open (sc-if wraps on mobile) -->
+            <sc-if value="{{ sidebarVisible }}" hint-placeholder-val="{{ true }}">
+                <div class="gz-sidebar">
+
+                    <!-- Drag handle (mobile only, via CSS) -->
+                    <div class="gz-drag-handle"></div>
+
+                    <!-- Desktop header (hidden on mobile via CSS) -->
+                    <div class="gz-sidebar-hdr-desktop"
+                        style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:15px 16px 13px;border-bottom:1px solid #EFEDE6;">
+                        <div>
+                            <div style="font-family:'Noto Sans SC',sans-serif;font-weight:700;font-size:17px;letter-spacing:.04em;color:#1A1A1A;line-height:1.1;">广州地铁</div>
+                            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;letter-spacing:.14em;color:#1A1A1A;margin-top:3px;">GUANGZHOU METRO</div>
+                            <div style="font-family:Inter,sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9A968D;margin-top:6px;">Network history · 1997–2026</div>
+                        </div>
+                        <button onClick="{{ toggleIndex }}"
+                            style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B6862;font-size:14px;line-height:1;padding:0;"
+                            style-hover="background:#F0EEE8" aria-label="Toggle line index">{{ collapseIcon }}</button>
+                    </div>
+
+                    <!-- Mobile header: label only, no close button (top bar ≡/× handles it) -->
+                    <div class="gz-sidebar-hdr-mobile"
+                        style="display:none;align-items:center;padding:0 16px 12px;border-bottom:1px solid #EFEDE6;">
+                        <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#9A968D;">Lines</div>
+                    </div>
+
+                    <sc-if value="{{ indexOpen }}" hint-placeholder-val="{{ true }}">
+                        <div class="gz-scroll" style="max-height:calc(100vh - 232px);overflow-y:auto;padding:7px 8px;">
+                            <sc-for list="{{ lineRows }}" as="row" hint-placeholder-count="8">
+                                <div onClick="{{ row.onClick }}"
+                                    style="display:flex;align-items:center;gap:11px;padding:7px 9px;border-radius:8px;cursor:pointer;opacity:{{ row.op }};background:{{ row.bg }};transition:opacity .3s, background .15s;"
+                                    style-hover="background:#F0EEE8">
+                                    <div style="flex:none;width:27px;height:27px;border-radius:50%;background:{{ row.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:{{ row.badgeSize }};">{{ row.badge }}</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-family:'Noto Sans SC',sans-serif;font-weight:500;font-size:13px;color:#1A1A1A;line-height:1.2;">{{ row.name_zh }}</div>
+                                        <div style="font-family:Inter,sans-serif;font-size:10.5px;color:#9A968D;letter-spacing:.03em;line-height:1.3;">{{ row.name_en }}</div>
+                                    </div>
+                                    <div style="flex:none;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#B0ABA1;">{{ row.year }}</div>
+                                </div>
+                            </sc-for>
+                        </div>
+                    </sc-if>
+                </div>
+            </sc-if>
+
+            <!-- TOP-RIGHT DATE CARD (desktop only, hidden via CSS on mobile) -->
+            <div class="gz-as-of">
+                <div style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#9A968D;">As of</div>
+                <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;letter-spacing:.02em;color:#1A1A1A;margin-top:1px;">{{ asOfDate }}</div>
+                <div style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.03em;color:#9A968D;margin-top:3px;">{{ openSummary }}</div>
             </div>
 
+            <!-- DETAIL / STATION PANEL -->
             <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
-                <div
-                    style="position:absolute;top:96px;right:16px;width:322px;max-width:calc(100vw - 32px);max-height:calc(100vh - 244px);display:flex;flex-direction:column;background:#FAFAF7;border:1px solid #E3E1DA;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+                <div class="gz-detail">
+                    <!-- Drag handle (mobile only, via CSS) -->
+                    <div class="gz-drag-handle"></div>
                     <div style="padding:15px 16px 13px;border-bottom:1px solid #EFEDE6;">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
                             <div style="min-width:0;">
-                                <div
-                                    style="font-family:'Noto Sans SC',sans-serif;font-weight:600;font-size:20px;color:#1A1A1A;line-height:1.15;">
-                                    {{ detail.title_zh }}</div>
-                                <div style="font-family:Inter,sans-serif;font-size:13px;color:#444;margin-top:2px;">{{
-                                    detail.title_en }}</div>
+                                <div style="font-family:'Noto Sans SC',sans-serif;font-weight:600;font-size:20px;color:#1A1A1A;line-height:1.15;">{{ detail.title_zh }}</div>
+                                <div style="font-family:Inter,sans-serif;font-size:13px;color:#444;margin-top:2px;">{{ detail.title_en }}</div>
                             </div>
                             <button onClick="{{ clearSelection }}"
                                 style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid #E3E1DA;background:#FAFAF7;cursor:pointer;color:#6B6862;font-size:16px;line-height:1;padding:0;"
                                 style-hover="background:#F0EEE8" aria-label="Close detail">×</button>
                         </div>
-                        <div
-                            style="font-family:Inter,sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8A867E;margin-top:9px;">
-                            {{ detail.micro }}</div>
+                        <div style="font-family:Inter,sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8A867E;margin-top:9px;">{{ detail.micro }}</div>
                         <sc-if value="{{ detail.hasChips }}" hint-placeholder-val="{{ false }}">
                             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
                                 <sc-for list="{{ detail.chips }}" as="c" hint-placeholder-count="2">
-                                    <div
-                                        style="display:flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;border:1px solid #EAE8E1;border-radius:20px;">
-                                        <span
-                                            style="flex:none;width:17px;height:17px;border-radius:50%;background:{{ c.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:{{ c.size }};">{{
-                                            c.badge }}</span>
-                                        <span style="font-family:Inter,sans-serif;font-size:11px;color:#444;">{{ c.label
-                                            }}</span>
+                                    <div style="display:flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;border:1px solid #EAE8E1;border-radius:20px;">
+                                        <span style="flex:none;width:17px;height:17px;border-radius:50%;background:{{ c.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:{{ c.size }};">{{ c.badge }}</span>
+                                        <span style="font-family:Inter,sans-serif;font-size:11px;color:#444;">{{ c.label }}</span>
                                     </div>
                                 </sc-for>
                             </div>
@@ -175,20 +414,13 @@
                     <div class="gz-scroll" style="overflow-y:auto;padding:3px 16px 14px;">
                         <sc-for list="{{ detail.rows }}" as="r" hint-placeholder-count="3">
                             <div style="display:flex;gap:13px;padding:9px 0;border-top:1px solid #EFEDE6;">
-                                <div
-                                    style="flex:none;width:64px;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#8A867E;letter-spacing:.03em;padding-top:2px;">
-                                    {{ r.date }}</div>
+                                <div style="flex:none;width:64px;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#8A867E;letter-spacing:.03em;padding-top:2px;">{{ r.date }}</div>
                                 <div style="flex:1;min-width:0;">
                                     <div style="display:flex;align-items:center;gap:7px;">
-                                        <sc-if value="{{ r.hasDot }}" hint-placeholder-val="{{ true }}"><span
-                                                style="flex:none;width:10px;height:10px;border-radius:50%;background:{{ r.color }};"></span></sc-if>
-                                        <span
-                                            style="font-family:Inter,sans-serif;font-weight:600;font-size:13px;color:#1A1A1A;line-height:1.3;">{{
-                                            r.label }}</span>
+                                        <sc-if value="{{ r.hasDot }}" hint-placeholder-val="{{ true }}"><span style="flex:none;width:10px;height:10px;border-radius:50%;background:{{ r.color }};"></span></sc-if>
+                                        <span style="font-family:Inter,sans-serif;font-weight:600;font-size:13px;color:#1A1A1A;line-height:1.3;">{{ r.label }}</span>
                                     </div>
-                                    <div
-                                        style="font-family:'Noto Sans SC',sans-serif;font-size:11.5px;color:#8A867E;margin-top:2px;line-height:1.45;">
-                                        {{ r.sub }}</div>
+                                    <div style="font-family:'Noto Sans SC',sans-serif;font-size:11.5px;color:#8A867E;margin-top:2px;line-height:1.45;">{{ r.sub }}</div>
                                 </div>
                             </div>
                         </sc-for>
@@ -196,32 +428,32 @@
                 </div>
             </sc-if>
 
-            <div
-                style="position:absolute;left:16px;right:16px;bottom:16px;background:#FAFAF7;border:1px solid #E3E1DA;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:14px 22px 14px 20px;display:flex;align-items:center;gap:22px;">
-                <div style="flex:none;width:206px;">
-                    <div
-                        style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#9A968D;">
-                        The network as of</div>
-                    <div
-                        style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:62px;line-height:1.0;letter-spacing:-.01em;color:#1A1A1A;margin-top:1px;">
-                        {{ bigYear }}</div>
-                    <div
-                        style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;letter-spacing:.03em;color:#1A1A1A;margin-top:3px;">
-                        {{ fullDate }}</div>
-                    <div
-                        style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A968D;margin-top:2px;">
-                        {{ openSummary }}</div>
+            <!-- TIMELINE BAR -->
+            <div class="gz-timeline">
+
+                <!-- Desktop: big year + date block -->
+                <div class="gz-tl-info">
+                    <div style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#9A968D;">The network as of</div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:62px;line-height:1.0;letter-spacing:-.01em;color:#1A1A1A;margin-top:1px;">{{ bigYear }}</div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;letter-spacing:.03em;color:#1A1A1A;margin-top:3px;">{{ fullDate }}</div>
+                    <div style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A968D;margin-top:2px;">{{ openSummary }}</div>
                 </div>
-                <button onClick="{{ togglePlay }}"
+
+                <!-- Mobile: compact date (shown via CSS on mobile only) -->
+                <div class="gz-tl-mobile-date">
+                    <div style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;color:#1A1A1A;line-height:1.2;">{{ bigYear }}</div>
+                    <div style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.06em;color:#9A968D;margin-top:1px;">{{ openSummary }}</div>
+                </div>
+
+                <!-- Play / pause button -->
+                <button class="gz-tl-play" onClick="{{ togglePlay }}"
                     style="flex:none;width:46px;height:46px;border-radius:50%;border:1.5px solid #1A1A1A;background:#FAFAF7;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"
                     style-hover="background:#F0EEE8" aria-label="Play or pause the replay">
-                    <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><span
-                            style="display:flex;gap:4px;"><span
-                                style="width:4px;height:15px;background:#1A1A1A;"></span><span
-                                style="width:4px;height:15px;background:#1A1A1A;"></span></span></sc-if>
-                    <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><span
-                            style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:13px solid #1A1A1A;margin-left:3px;"></span></sc-if>
+                    <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><span style="display:flex;gap:4px;"><span style="width:4px;height:15px;background:#1A1A1A;"></span><span style="width:4px;height:15px;background:#1A1A1A;"></span></span></sc-if>
+                    <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><span style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:13px solid #1A1A1A;margin-left:3px;"></span></sc-if>
                 </button>
+
+                <!-- Scrubber track -->
                 <div style="flex:1;min-width:0;">{{ trackEl }}</div>
             </div>
 
@@ -233,12 +465,24 @@ class Component extends DCLogic {
     t: 1, playing: false,
     selectionKind: null, selectedLineId: null, selStationKey: null, selGeoProps: null,
     hoverEvent: null, indexCollapsed: false, loaded: false, mapReady: false,
+    isMobile: false,
   };
   START = Date.UTC(1997, 5, 28);
   END   = Date.UTC(2026, 11, 31);
   MON   = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
   async componentDidMount() {
+    // Detect mobile and update on resize
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 640;
+      if (mobile !== this.state.isMobile) {
+        this.setState({ isMobile: mobile, indexCollapsed: true });
+      }
+    };
+    this.setState({ isMobile: window.innerWidth < 640, indexCollapsed: window.innerWidth < 640 });
+    this._onResize = checkMobile;
+    window.addEventListener('resize', this._onResize);
+
     try { const v = parseFloat(localStorage.getItem('gzmetro.t')); if (!isNaN(v) && v >= 0 && v <= 1) this.setState({ t: v }); } catch (e) {}
     try {
       const m = await import('./gz-data.js');
@@ -248,6 +492,7 @@ class Component extends DCLogic {
     } catch (e) { console.error('gz-data load failed', e); }
   }
   componentWillUnmount() {
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
     if (this.raf) cancelAnimationFrame(this.raf);
     if (this.mapInst) { this.mapInst.remove(); this.mapInst = null; }
   }
@@ -304,15 +549,26 @@ class Component extends DCLogic {
   };
   stopPlay() { if (this.raf) cancelAnimationFrame(this.raf); try { localStorage.setItem('gzmetro.t', String(this.state.t)); } catch (e) {} this.setState({ playing: false }); }
 
-  selectLine = (id) => { this.setState({ selectionKind: 'line', selectedLineId: id, selStationKey: null, selGeoProps: null }); };
+  selectLine = (id) => {
+    this.setState({ selectionKind: 'line', selectedLineId: id, selStationKey: null, selGeoProps: null });
+    // On mobile, collapse the line index when a line is selected
+    if (this.state.isMobile) this.setState({ indexCollapsed: true });
+  };
   clearSelection = () => { this.setState({ selectionKind: null, selectedLineId: null, selStationKey: null, selGeoProps: null }); };
   toggleIndex = () => { this.setState(s => ({ indexCollapsed: !s.indexCollapsed })); };
+  closeOverlay = () => {
+    // Scrim click: close whichever overlay is topmost
+    if (!this.state.indexCollapsed) this.setState({ indexCollapsed: true });
+    else this.clearSelection();
+  };
   selectGeoStation = (props) => {
     let refs = [];
     try { refs = typeof props._refs === 'string' ? JSON.parse(props._refs) : (Array.isArray(props._refs) ? props._refs : []); } catch (_) {}
     const st = this.stations && this.stations.find(s => s.zh === props.name_zh || s.en === props.name_en);
     if (st) { this.setState({ selectionKind: 'station', selStationKey: st.key, selGeoProps: { _refs: refs } }); }
     else { this.setState({ selectionKind: 'geo-station', selGeoProps: { ...props, _refs: refs }, selStationKey: null }); }
+    // On mobile, close the line index if it's open
+    if (this.state.isMobile) this.setState({ indexCollapsed: true });
   };
 
   setTrackRef = (el) => { this.trackRef = el; };
@@ -334,10 +590,14 @@ class Component extends DCLogic {
       style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       center: [113.26, 23.12],
       zoom: 10,
-      attributionControl: { compact: true },
+      // Disable the default attribution control so we can place it on the left
+      // to avoid overlapping the zoom controls on the right.
+      attributionControl: false,
       pitchWithRotate: false,
       dragRotate: false,
     });
+    // Re-add attribution on the bottom-left — away from our zoom controls.
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     this.mapInst = map;
 
     map.on('load', () => {
@@ -397,21 +657,26 @@ class Component extends DCLogic {
 
   buildTrack() {
     const R = React.createElement, t = this.state.t, pct = t * 100;
+    const isMobile = this.state.isMobile;
     const kids = [];
     kids.push(R('div', { key: 'base', style: { position: 'absolute', left: 0, right: 0, top: '38px', height: '3px', background: '#D8D6CF', borderRadius: '2px' } }));
     kids.push(R('div', { key: 'prog', style: { position: 'absolute', left: 0, top: '38px', height: '3px', width: pct + '%', background: '#1A1A1A', borderRadius: '2px' } }));
     for (let y = 1997; y <= 2026; y++) {
       const p = this.tOf(y + '-01-01') * 100;
       kids.push(R('div', { key: 'tk' + y, style: { position: 'absolute', left: p + '%', top: '34px', width: '1px', height: '8px', background: '#C7C5BE' } }));
-      if (y % 2 === 1 || y === 2026) kids.push(R('div', { key: 'lb' + y, style: { position: 'absolute', left: p + '%', top: '47px', transform: 'translateX(-50%)', fontFamily: 'Space Grotesk, sans-serif', fontVariantNumeric: 'tabular-nums', fontSize: '9.5px', color: '#A6A299', whiteSpace: 'nowrap' } }, '\'' + String(y).slice(2)));
+      // On mobile, only show every 4 years to avoid crowding
+      const showLabel = isMobile ? (y % 4 === 1 || y === 2026) : (y % 2 === 1 || y === 2026);
+      if (showLabel) kids.push(R('div', { key: 'lb' + y, style: { position: 'absolute', left: p + '%', top: '47px', transform: 'translateX(-50%)', fontFamily: 'Space Grotesk, sans-serif', fontVariantNumeric: 'tabular-nums', fontSize: '9.5px', color: '#A6A299', whiteSpace: 'nowrap' } }, '\'' + String(y).slice(2)));
     }
-    for (const ev of (this.EVENTS || [])) {
-      const p = this.tOf(ev.date) * 100; const active = this.state.hoverEvent === ev.date;
-      kids.push(R('div', { key: 'evh' + ev.date, onMouseEnter: () => this.setState({ hoverEvent: ev.date }), onMouseLeave: () => this.setState({ hoverEvent: null }), style: { position: 'absolute', left: p + '%', top: '18px', width: '14px', height: '24px', transform: 'translateX(-50%)', cursor: 'pointer', display: 'flex', justifyContent: 'center' } },
-        R('div', { key: 'n', style: { width: '2px', height: '100%', background: active ? '#1A1A1A' : '#B8453B', opacity: active ? 1 : 0.85 } })));
+    if (!isMobile) {
+      for (const ev of (this.EVENTS || [])) {
+        const p = this.tOf(ev.date) * 100; const active = this.state.hoverEvent === ev.date;
+        kids.push(R('div', { key: 'evh' + ev.date, onMouseEnter: () => this.setState({ hoverEvent: ev.date }), onMouseLeave: () => this.setState({ hoverEvent: null }), style: { position: 'absolute', left: p + '%', top: '18px', width: '14px', height: '24px', transform: 'translateX(-50%)', cursor: 'pointer', display: 'flex', justifyContent: 'center' } },
+          R('div', { key: 'n', style: { width: '2px', height: '100%', background: active ? '#1A1A1A' : '#B8453B', opacity: active ? 1 : 0.85 } })));
+      }
     }
     kids.push(R('div', { key: 'handle', style: { position: 'absolute', left: pct + '%', top: '30px', transform: 'translateX(-50%)', width: '20px', height: '20px', borderRadius: '50%', background: '#FAFAF7', border: '2px solid #1A1A1A', boxShadow: '0 1px 3px rgba(0,0,0,0.18)', pointerEvents: 'none' } }));
-    if (this.state.hoverEvent) {
+    if (!isMobile && this.state.hoverEvent) {
       const ev = (this.EVENTS || []).find(e => e.date === this.state.hoverEvent);
       if (ev) {
         const p = this.tOf(ev.date) * 100; const left = Math.max(8, Math.min(92, p));
@@ -473,12 +738,19 @@ class Component extends DCLogic {
 
   renderVals() {
     const t = this.state.t, iso = this.isoAt(t);
+    const isMobile = this.state.isMobile;
+    // Sidebar visible: always on desktop; on mobile only when line index is open
+    const sidebarVisible = !isMobile || !this.state.indexCollapsed;
+    // Scrim: show on mobile whenever any overlay (lines list or detail panel) is open
+    const showScrim = isMobile && (!this.state.indexCollapsed || this.state.selectionKind !== null);
+    const mobileMenuIcon = this.state.indexCollapsed ? '≡' : '×';
     const base = {
-      togglePlay: this.togglePlay, toggleIndex: this.toggleIndex, clearSelection: this.clearSelection,
+      togglePlay: this.togglePlay, toggleIndex: this.toggleIndex, clearSelection: this.clearSelection, closeOverlay: this.closeOverlay,
       playing: this.state.playing, notPlaying: !this.state.playing,
       indexOpen: !this.state.indexCollapsed, collapseIcon: this.state.indexCollapsed ? '+' : '–',
       bigYear: this.yearAt(t), fullDate: this.fmtFull(iso), asOfDate: this.fmtFull(iso),
       zoomIn: this.zoomIn, zoomOut: this.zoomOut, resetView: this.resetView,
+      sidebarVisible, showScrim, mobileMenuIcon,
     };
     if (!this.LINES) return Object.assign(base, { mapEl: this.buildMap(), trackEl: this.buildTrack(), lineRows: [], hasSelection: false, detail: {}, openSummary: '' });
     const openLines    = this.LINES.filter(l => l.opened <= iso).length;

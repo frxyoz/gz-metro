@@ -1,8 +1,8 @@
 line,segment,opened,closed,notes
 1,Xilang – Huangsha,1997-06-28,,First section; trial operation. System's opening day.
 1,Huangsha – Guangzhou East Railway Station,1999-06-28,,Segment completed Dec 1998; full-line operation began 28 Jun 1999. Some sources cite 16 Feb 1999 (sightseeing). [verify which date your timeline uses]
-2,Sanyuanli – Changgang,2002-12-29,,Original Line 2 central section; Changgang is where L2/L8 diverge after the 2010 restructure.
-2,Changgang – Xiaogang (pre-restructure),2002-12-29,2010-09-25,RESTRUCTURE: Changgang–Xiaogang ran as Line 2 from 2002; transferred to Line 8 on 2010-09-25.
+2,Sanyuanli – Jiangnanxi,2002-12-29,,Original Line 2 north-to-central section; stops at Jiangnanxi (pre-2010 direct route to Xiaogang handled as synthetic geometry).
+2,Jiangnanxi – Xiaogang (pre-restructure),2002-12-29,2010-09-25,RESTRUCTURE: direct Jiangnanxi–Xiaogang connection (pre-2010 Line 2); closed when Line 8 opened and new Line 2 alignment built via Changgang. Synthetic geometry injected by build script.
 2,Xiaogang – Wanshengwei (original Line 2 SE branch),2003-06-28,2010-09-25,"RESTRUCTURE: this stretch (via Pazhou) was original Line 2; on 2010-09-25 it was split off to form Line 8. See Line 8 rows."
 2,Sanyuanli – Jiahewanggang (north extension),2010-09-25,,2010 realignment (trial 25 Sep 2010).
 2,Jiangnanxi – Guangzhou South Railway Station (south extension),2010-09-25,,2010 realignment; current southern terminus.

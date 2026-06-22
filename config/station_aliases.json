@@ -2,6 +2,16 @@
   "_ref_fallbacks": {
     "2": ["8"]
   },
+  "_manual_line_features": [
+    {
+      "line": "2",
+      "segment": "Jiangnanxi – Xiaogang (pre-restructure)",
+      "opened": "2002-12-29",
+      "closed": "2010-09-25",
+      "coordinates": [[113.2686912, 23.1000412], [113.2766147, 23.0957569]],
+      "_note": "Pre-2010 direct Jiangnanxi–Xiaogang connection; historical track not in OSM. Changgang (~550 m from this line) must stay invisible before 2010."
+    }
+  ],
   "Airport South": "@113.2960,23.3827",
   "Airport North": "@113.2996,23.3980",
   "Fei'eling": "@113.1494,23.3807",

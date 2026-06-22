@@ -149,11 +149,13 @@ def main() -> None:
     # ── Load aliases ──────────────────────────────────────────────────────────
     aliases: dict[str, str] = {}
     ref_fallbacks: dict[str, list] = {}
+    manual_line_features: list[dict] = []
     if ALIAS_IN.exists():
         with open(ALIAS_IN) as f:
             raw = json.load(f)
         ref_fallbacks = raw.pop("_ref_fallbacks", {})
-        aliases = raw
+        manual_line_features = raw.pop("_manual_line_features", [])
+        aliases = {k: v for k, v in raw.items() if not k.startswith("_")}
 
     # ── Load OSM GeoJSON ──────────────────────────────────────────────────────
     with open(GEO_IN, encoding="utf-8") as f:
@@ -237,8 +239,32 @@ def main() -> None:
             if (row.get("opened") or "").strip():
                 phases.append(row)
 
-    # ── Process phases ────────────────────────────────────────────────────────
+    # ── Inject manual line features ───────────────────────────────────────────
+    # Segments listed here bypass OSM geometry lookup entirely (historical tracks
+    # not in OSM).  The matching CSV row is skipped below to avoid duplication.
+    manual_segments: set[str] = set()
     out_line_feats: list[dict] = []
+    for mf in manual_line_features:
+        csv_line = str(mf["line"])
+        osm_ref  = CSV_LINE_TO_OSM.get(csv_line, csv_line)
+        color    = get_color(osm_ref, csv_line)
+        coords   = mf["coordinates"]
+        from shapely.geometry import LineString as _LS
+        geom_wgs = _LS(coords)
+        seg_name = mf["segment"]
+        out_line_feats.append({
+            "type": "Feature",
+            "geometry": mapping(geom_wgs),
+            "properties": {
+                "kind": "line", "line": osm_ref,
+                "segment": seg_name, "color": color,
+                "opened": parse_date(mf.get("opened", "")),
+                "closed": parse_date(mf.get("closed", "")),
+            },
+        })
+        manual_segments.add(seg_name)
+
+    # ── Process phases ────────────────────────────────────────────────────────
 
     rpt: dict = dict(
         total=len(phases), matched=0,
@@ -253,6 +279,11 @@ def main() -> None:
         closed   = parse_date(row.get("closed", ""))
         osm_ref  = CSV_LINE_TO_OSM.get(csv_line, csv_line)
         color    = get_color(osm_ref, csv_line)
+
+        # Skip rows whose geometry was already injected as a manual feature
+        if segment in manual_segments:
+            rpt["matched"] += 1
+            continue
 
         start_name, end_name = parse_segment(segment)
 

@@ -2,7 +2,9 @@
 
 An interactive, full-viewport web app that replays the growth of the Guangzhou Metro network from its 1997 opening through the present day.
 
-**[Live demo →](https://frxyoz.github.io/gz-metro)**
+**[gzmetro.olriczeng.com →](https://gzmetro.olriczeng.com)**
+
+![Guangzhou Metro Time-Map showing the full network as of 2026](assets/example.png)
 
 ---
 
@@ -39,6 +41,8 @@ The pre-built `data/guangzhou_metro_temporal.geojson` is included, so step 2 is 
 index.html                  Main app — MapLibre map + DC component logic
 gz-data.js                  Metro dataset: line colors, station schematic coords, opening dates
 support.js                  DC runtime (React 18 + reactive template compiler)
+assets/
+  example.png               Screenshot
 data/
   guangzhou_metro.geojson         Raw OSM geometry (~4 MB)
   guangzhou_metro_temporal.geojson  Built output: time-stamped line chunks + station dots
